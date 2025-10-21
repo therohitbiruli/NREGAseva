@@ -39,10 +39,7 @@ function App() {
     const [stateAverage, setStateAverage] = useState({ householdsWorked: 0, personDays: 0, wagesSpent: 0 }); // New state for average
     const [isLoading, setIsLoading] = useState(true);
 
-    // Replace the entire useEffect in your App.js with this one.
-
-// Replace the entire useEffect in your App.js with this one.
-
+   
 useEffect(() => {
   async function getData() {
       setIsLoading(true);
