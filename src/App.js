@@ -8,7 +8,18 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const ComparisonCard = ({ title, districtValue, stateValue }) => {
-    // ... (This component remains the same)
+  const isAboveAverage = districtValue >= stateValue;
+  const difference = Math.abs(districtValue - stateValue);
+
+  return (
+      <div className={`p-3 rounded text-center ${isAboveAverage ? 'bg-green-100' : 'bg-red-100'}`}>
+          <h2 className="text-sm font-semibold text-gray-700">{title}</h2>
+          <p className="text-xl font-bold text-gray-900">{districtValue.toLocaleString()}</p>
+          <p className={`text-xs font-medium ${isAboveAverage ? 'text-green-700' : 'text-red-700'}`}>
+              {isAboveAverage ? '↑' : '↓'} {difference.toLocaleString()} {isAboveAverage ? 'above' : 'below'} state average ({stateValue.toLocaleString()})
+          </p>
+      </div>
+  ); // ... (This component remains the same)
 };
 
 function App() {
@@ -75,6 +86,49 @@ function App() {
     }, [selectedDistrict]);
 
     return (
+      <div className="min-h-screen bg-gray-50 p-4 font-sans">
+      <header className="text-center mb-6">
+          <h1 className="text-3xl font-bold text-green-700">NREGAkendra</h1>
+          <p className="text-gray-600 mt-2">MGNREGA Performance Dashboard for Jharkhand</p>
+      </header>
+
+      <div className="max-w-md mx-auto bg-white p-4 rounded-lg shadow-md">
+          <label htmlFor="district-select" className="block mb-2 font-semibold text-gray-800">Select Your District:</label>
+          <select
+              id="district-select"
+              className="w-full border border-gray-300 p-2 rounded mb-6 focus:ring-2 focus:ring-green-500"
+              value={selectedDistrict.code}
+              onChange={(e) =>
+                  setSelectedDistrict(districts.find(d => d.code === e.target.value))
+              }
+          >
+              {districts.map((d) => (
+                  <option key={d.code} value={d.code}>{d.name}</option>
+              ))}
+          </select>
+
+          {isLoading ? (
+              <div className="text-center p-8">Loading data...</div>
+          ) : (
+              <>
+                  {/* Comparison Cards */}
+                  <div className="mb-6">
+                      <h2 className="font-semibold text-lg mb-2 text-center text-gray-700">This Month vs. State Average</h2>
+                      <div className="grid grid-cols-1 gap-4">
+                          <ComparisonCard title="Households Worked" districtValue={summaryData.householdsWorked} stateValue={stateAverage.householdsWorked} />
+                          <ComparisonCard title="Wages Spent (₹)" districtValue={summaryData.wagesSpent} stateValue={stateAverage.wagesSpent} />
+                      </div>
+                  </div>
+
+                  {/* Trend Chart */}
+                  <div className="mt-4">
+                      <h2 className="font-semibold text-lg mb-2 text-center text-gray-700">Trend (Last 6 Months)</h2>
+                      <Line data={trendData} options={{ responsive: true }} />
+                  </div>
+              </>
+          )}
+      </div>
+  </div>
         // ... (The JSX part of your App component remains the same, it will now work with the new state)
     );
 }
