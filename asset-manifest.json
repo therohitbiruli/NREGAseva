@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/NREGAseva/static/css/main.eaa33243.css",
+    "main.js": "/NREGAseva/static/js/main.7f08aaf3.js",
+    "static/js/453.1ca50e99.chunk.js": "/NREGAseva/static/js/453.1ca50e99.chunk.js",
+    "index.html": "/NREGAseva/index.html",
+    "main.eaa33243.css.map": "/NREGAseva/static/css/main.eaa33243.css.map",
+    "main.7f08aaf3.js.map": "/NREGAseva/static/js/main.7f08aaf3.js.map",
+    "453.1ca50e99.chunk.js.map": "/NREGAseva/static/js/453.1ca50e99.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.eaa33243.css",
+    "static/js/main.7f08aaf3.js"
+  ]
+}
