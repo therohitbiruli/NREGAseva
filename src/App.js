@@ -49,10 +49,13 @@ function App() {
             const averageData = await fetchStateAverage();
             setStateAverage(averageData);
 
-            if (!records) {
-                setIsLoading(false);
-                return;
-            };
+            if (!records || records.length === 0) {
+              // If no records, reset data to 0
+              setSummaryData({ householdsWorked: 0, personDays: 0, wagesSpent: 0 });
+              setTrendData({ labels: [], datasets: [] });
+              setIsLoading(false);
+              return;
+          };
 
             const last6Months = records.slice(-6);
             const current = last6Months.length > 0 ? last6Months[last6Months.length - 1] : {};
@@ -64,18 +67,18 @@ function App() {
             });
 
             setTrendData({
-                labels: last6Months.map(r => r.month_name || 'N/A'),
-                datasets: [
-                    {
-                        label: "Households Worked",
-                        data: last6Months.map(r => parseInt(r.households_worked || 0)),
-                        borderColor: "rgb(34,197,94)",
-                        backgroundColor: "rgba(34,197,94,0.5)"
-                    }
-                ]
-            });
-            setIsLoading(false);
-        }
+              labels: last6Months.map(r => r.Month || 'N/A'),
+              datasets: [
+                  {
+                      label: "Households Worked",
+                      data: last6Months.map(r => parseInt(r['Total Households Worked'] || 0)),
+                      borderColor: "rgb(34,197,94)",
+                      backgroundColor: "rgba(34,197,94,0.5)"
+                  }
+              ]
+          });
+          setIsLoading(false);
+      }
 
         getData();
     }, [selectedDistrict]);
