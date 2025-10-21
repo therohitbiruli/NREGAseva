@@ -11,7 +11,7 @@ export async function fetchDistrictData(districtCode) {
   try {
     const response = await axios.get(`https://api.data.gov.in/resource/${RESOURCE_ID}`, {
       params: {
-        api-key: API_KEY,
+        'api-key': API_KEY,
         format: "json",
         filters: `state_code=${STATE_CODE}&district_code=${districtCode}`,
         limit: 12
