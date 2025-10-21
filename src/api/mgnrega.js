@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // --- IMPORTANT: REPLACE THESE WITH YOUR OWN CREDENTIALS ---
-const API_KEY = "579b464db66ec23bdd00000161ecc5e3cb65484b594aa822cd9ea015";
+const API_KEY = "579b464db66ec23bdd000001bdc01081422544e260f634b8b8c51aa1";
 const RESOURCE_ID = "ee03643a-ee4c-48c2-ac30-9f26ff26ab722";
 // ---------------------------------------------------------
 
