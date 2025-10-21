@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
-import { fetchDistrictData, fetchStateAverage } from "./api/mgnrega";
+import { loadInitialData, getDistrictData, getDistrictList, fetchStateAverage } from "./api/mgnrega";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from "chart.js";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const ComparisonCard = ({ title, districtValue, stateValue }) => {
-    const isAboveAverage = districtValue > stateValue; // Use > to avoid green for 0 vs 0
+    const isAboveAverage = districtValue > stateValue;
     const difference = Math.abs(districtValue - stateValue);
 
     return (
@@ -29,59 +29,61 @@ function App() {
     const [trendData, setTrendData] = useState({ labels: [], datasets: [] });
     const [stateAverage, setStateAverage] = useState({ householdsWorked: 0, wagesSpent: 0 });
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // This effect runs only ONCE to fetch all data and populate the district list.
+    // This effect runs only ONCE to load all data and populate the district list.
     useEffect(() => {
-        async function loadInitialData() {
-            const allRecords = await fetchDistrictData(''); // Fetch all data once
-            const uniqueDistricts = [...new Set(allRecords.map(r => r['District Name']))].filter(Boolean).sort();
-            
-            setDistricts(uniqueDistricts);
-            if (uniqueDistricts.length > 0) {
-                setSelectedDistrict(uniqueDistricts[0]); // Select the first district by default
+        async function startup() {
+            try {
+                await loadInitialData(); // Wait for all data to be fetched and parsed
+                const districtList = getDistrictList(); // Get the list of districts
+                setDistricts(districtList);
+                if (districtList.length > 0) {
+                    setSelectedDistrict(districtList[0]); // Set the first district as the default
+                } else {
+                    setError("No district data could be loaded. The data source might be empty.");
+                }
+            } catch (e) {
+                setError("Failed to load initial data. Please check your connection and the API status.");
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         }
-        loadInitialData();
-    }, []); // Empty array means this runs only on the first render
+        startup();
+    }, []); // The empty array ensures this runs only once.
 
     // This effect runs whenever 'selectedDistrict' changes.
     useEffect(() => {
         if (!selectedDistrict) return;
 
-        async function getDataForDistrict() {
-            setIsLoading(true);
-            const records = await fetchDistrictData(selectedDistrict);
-            const averageData = await fetchStateAverage(); // You could calculate this dynamically too
-            setStateAverage(averageData);
+        const records = getDistrictData(selectedDistrict);
+        const averageData = fetchStateAverage();
+        setStateAverage(averageData);
 
-            if (!records || records.length === 0) {
-                setSummaryData({ householdsWorked: 0, wagesSpent: 0 });
-                setTrendData({ labels: [], datasets: [] });
-                setIsLoading(false);
-                return;
-            };
+        if (!records || records.length === 0) {
+            setSummaryData({ householdsWorked: 0, wagesSpent: 0 });
+            setTrendData({ labels: [], datasets: [] });
+            return;
+        };
 
-            const last6Months = records.slice(-6);
-            const current = last6Months[last6Months.length - 1] || {};
+        const last6Months = records.slice(-6);
+        const current = last6Months[last6Months.length - 1] || {};
 
-            setSummaryData({
-                householdsWorked: parseInt(current['Total Households Worked'] || 0),
-                wagesSpent: parseFloat(current['Wages'] || 0)
-            });
+        setSummaryData({
+            householdsWorked: parseInt(current['Total Households Worked'] || 0),
+            wagesSpent: parseFloat(current['Wages'] || 0)
+        });
 
-            setTrendData({
-                labels: last6Months.map(r => r.Month || 'N/A'),
-                datasets: [{
-                    label: "Households Worked",
-                    data: last6Months.map(r => parseInt(r['Total Households Worked'] || 0)),
-                    borderColor: "rgb(34,197,94)",
-                    backgroundColor: "rgba(34,197,94,0.5)"
-                }]
-            });
-            setIsLoading(false);
-        }
-        getDataForDistrict();
+        setTrendData({
+            labels: last6Months.map(r => r.Month || 'N/A'),
+            datasets: [{
+                label: "Households Worked",
+                data: last6Months.map(r => parseInt(r['Total Households Worked'] || 0)),
+                borderColor: "rgb(34,197,94)",
+                backgroundColor: "rgba(34,197,94,0.5)"
+            }]
+        });
+
     }, [selectedDistrict]);
 
     return (
@@ -92,26 +94,26 @@ function App() {
             </header>
 
             <div className="max-w-md mx-auto bg-white p-4 rounded-lg shadow-md">
-                <label htmlFor="district-select" className="block mb-2 font-semibold text-gray-800">Select Your District:</label>
-                <select
-                    id="district-select"
-                    className="w-full border border-gray-300 p-2 rounded mb-6 focus:ring-2 focus:ring-green-500"
-                    value={selectedDistrict}
-                    onChange={(e) => setSelectedDistrict(e.target.value)}
-                    disabled={districts.length === 0} // Disable until districts are loaded
-                >
-                    <option value="">{districts.length > 0 ? "Select a district" : "Loading districts..."}</option>
-                    {districts.map((district) => (
-                        <option key={district} value={district}>
-                            {district}
-                        </option>
-                    ))}
-                </select>
-
-                {isLoading ? (
-                    <div className="text-center p-8">Loading data...</div>
+                {error ? (
+                    <div className="text-center p-4 bg-red-100 text-red-700 rounded">{error}</div>
                 ) : (
                     <>
+                        <label htmlFor="district-select" className="block mb-2 font-semibold text-gray-800">Select Your District:</label>
+                        <select
+                            id="district-select"
+                            className="w-full border border-gray-300 p-2 rounded mb-6 focus:ring-2 focus:ring-green-500"
+                            value={selectedDistrict}
+                            onChange={(e) => setSelectedDistrict(e.target.value)}
+                            disabled={isLoading}
+                        >
+                            {isLoading && <option>Loading districts...</option>}
+                            {districts.map((district) => (
+                                <option key={district} value={district}>
+                                    {district}
+                                </option>
+                            ))}
+                        </select>
+                        
                         <div className="mb-6">
                             <h2 className="font-semibold text-lg mb-2 text-center text-gray-700">This Month vs. State Average</h2>
                             <div className="grid grid-cols-1 gap-4">
