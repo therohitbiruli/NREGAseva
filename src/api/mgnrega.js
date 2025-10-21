@@ -4,7 +4,7 @@ import axios from "axios";
 import Papa from "papaparse";
 
 const API_KEY = "579b464db66ec23bdd000001bdc01081422544e260f634b8b8c51aa1";
-const RESOURCE_ID = "ee03643a-ee4c-48c2-ac30-9f26ff26ab722";
+const RESOURCE_ID = "ee03643a-ee4c-48c2-ac30-9f2ff26ab722";
 const JHARKHAND_CSV_URL = `https://api.data.gov.in/resource/${RESOURCE_ID}?api-key=${API_KEY}&format=csv&limit=all&filters[state_name]=JHARKHAND`;
 
 // Cache for the entire dataset
