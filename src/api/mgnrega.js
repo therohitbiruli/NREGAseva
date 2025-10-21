@@ -9,8 +9,7 @@ const RESOURCE_ID = "ee03643a-ee4c-4c82-ac30-9f26ff26ab722";
 // ---------------------------------------------------------
 
 // Construct the URL to fetch the CSV for all of Jharkhand
-const JHARKHAND_CSV_URL = `https://api.data.gov.in/resource/ee03643a-ee4c-48c2-ac30-9f2ff26ab722?api-key=579b464db66ec23bdd000001bdc01081422544e260f634b8b8c51aa1&format=csv&filters%5Bstate_name%5D=JHARKHAND' \
--H 'accept: application/xml;
+const JHARKHAND_CSV_URL = `https://api.data.gov.in/resource/ee03643a-ee4c-48c2-ac30-9f2ff26ab722?api-key=579b464db66ec23bdd000001bdc01081422544e260f634b8b8c51aa1&format=csv&filters%5Bstate_name%5D=JHARKHAND`
 
 // This function for the state average can stay the same
 export function fetchStateAverage() {
