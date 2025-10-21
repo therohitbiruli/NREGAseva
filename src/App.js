@@ -109,10 +109,14 @@ function App() {
             wagesSpent: parseFloat(current['Wages'] || 0)
         });
 
-        // Convert month names to Hindi
+        // Convert month names to Hindi with year
         const hindiLabels = last6Months.map(r => {
             const monthName = r.Month || 'N/A';
-            return monthNames[monthName] || monthName;
+            const year = r.Year || r.year || new Date().getFullYear(); // Try to get year from data
+            // Debug: Log what we're getting
+            console.log('Original month from data:', monthName, 'Year:', year);
+            const hindiMonth = monthNames[monthName] || monthName;
+            return `${hindiMonth} ${year}`;
         });
 
         setTrendData({
@@ -145,23 +149,23 @@ function App() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100 p-4 font-sans">
-            <header className="text-center mb-8">
-                <h1 className="text-5xl font-black text-green-800 mb-2">नरेगा केंद्र</h1>
-                <p className="text-xl text-gray-700 font-semibold">मनरेगा प्रदर्शन डैशबोर्ड - झारखंड</p>
+        <div className="min-h-screen bg-gradient-to-b from-green-50 to-green-100 p-2 sm:p-4 font-sans">
+            <header className="text-center mb-4 sm:mb-8">
+                <h1 className="text-3xl sm:text-5xl font-black text-green-800 mb-1 sm:mb-2">नरेगा केंद्र</h1>
+                <p className="text-sm sm:text-xl text-gray-700 font-semibold">मनरेगा प्रदर्शन डैशबोर्ड - झारखंड</p>
             </header>
 
-            <div className="max-w-6xl mx-auto bg-white p-6 rounded-2xl shadow-2xl">
+            <div className="max-w-6xl mx-auto bg-white p-3 sm:p-6 rounded-2xl shadow-2xl">
                 {error ? (
                     <div className="text-center p-6 bg-red-100 text-red-700 rounded-xl text-xl font-bold">{error}</div>
                 ) : (
                     <>
-                        <label htmlFor="district-select" className="block mb-3 font-bold text-2xl text-gray-800 text-center">
+                        <label htmlFor="district-select" className="block mb-2 sm:mb-3 font-bold text-xl sm:text-2xl text-gray-800 text-center">
                             अपना ज़िला चुनें:
                         </label>
                         <select
                             id="district-select"
-                            className="w-full border-4 border-green-500 p-4 rounded-xl mb-8 focus:ring-4 focus:ring-green-300 text-xl font-bold text-gray-800 bg-green-50"
+                            className="w-full border-4 border-green-500 p-3 sm:p-4 rounded-xl mb-4 sm:mb-8 focus:ring-4 focus:ring-green-300 text-lg sm:text-xl font-bold text-gray-800 bg-green-50"
                             value={selectedDistrict}
                             onChange={(e) => setSelectedDistrict(e.target.value)}
                             disabled={isLoading}
@@ -175,20 +179,21 @@ function App() {
                         </select>
                         
                         {/* Main content grid - side by side on desktop, stacked on mobile */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-8">
                             {/* Left side - Trend Chart (takes 2 columns on desktop) */}
-                            <div className="lg:col-span-2 bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl shadow-lg">
-                                <h2 className="font-black text-2xl mb-4 text-center text-gray-800">पिछले 6 महीने का रुझान</h2>
-                                <div className="bg-white p-4 rounded-lg">
+                            <div className="lg:col-span-2 bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-6 rounded-xl shadow-lg order-2 lg:order-1">
+                                <h2 className="font-black text-xl sm:text-2xl mb-3 sm:mb-4 text-center text-gray-800">पिछले 6 महीने का रुझान</h2>
+                                <div className="bg-white p-2 sm:p-4 rounded-lg">
                                     <Line 
                                         data={trendData} 
                                         options={{ 
                                             responsive: true,
+                                            maintainAspectRatio: true,
                                             plugins: {
                                                 legend: {
                                                     labels: {
                                                         font: {
-                                                            size: 16,
+                                                            size: window.innerWidth < 640 ? 12 : 16,
                                                             weight: 'bold'
                                                         }
                                                     }
@@ -198,7 +203,7 @@ function App() {
                                                 y: {
                                                     ticks: {
                                                         font: {
-                                                            size: 14,
+                                                            size: window.innerWidth < 640 ? 10 : 14,
                                                             weight: 'bold'
                                                         }
                                                     }
@@ -206,7 +211,7 @@ function App() {
                                                 x: {
                                                     ticks: {
                                                         font: {
-                                                            size: 14,
+                                                            size: window.innerWidth < 640 ? 10 : 14,
                                                             weight: 'bold'
                                                         }
                                                     }
@@ -217,29 +222,29 @@ function App() {
                                 </div>
                                 
                                 {/* Quick Statistics Below Chart */}
-                                <div className="mt-4 grid grid-cols-3 gap-3">
-                                    <div className="bg-white p-3 rounded-lg text-center shadow">
-                                        <BarChart3 size={24} className="mx-auto mb-1 text-blue-600" />
-                                        <p className="text-xs text-gray-600 font-semibold">कुल परिवार</p>
-                                        <p className="text-lg font-black text-gray-800">{totalStats.totalHouseholds.toLocaleString('hi-IN')}</p>
+                                <div className="mt-3 sm:mt-4 grid grid-cols-3 gap-2 sm:gap-3">
+                                    <div className="bg-white p-2 sm:p-3 rounded-lg text-center shadow">
+                                        <BarChart3 size={window.innerWidth < 640 ? 20 : 24} className="mx-auto mb-1 text-blue-600" />
+                                        <p className="text-xs sm:text-xs text-gray-600 font-semibold">कुल परिवार</p>
+                                        <p className="text-sm sm:text-lg font-black text-gray-800">{totalStats.totalHouseholds.toLocaleString('hi-IN')}</p>
                                     </div>
-                                    <div className="bg-white p-3 rounded-lg text-center shadow">
-                                        <Users size={24} className="mx-auto mb-1 text-green-600" />
-                                        <p className="text-xs text-gray-600 font-semibold">औसत/माह</p>
-                                        <p className="text-lg font-black text-gray-800">{totalStats.avgHouseholds.toLocaleString('hi-IN')}</p>
+                                    <div className="bg-white p-2 sm:p-3 rounded-lg text-center shadow">
+                                        <Users size={window.innerWidth < 640 ? 20 : 24} className="mx-auto mb-1 text-green-600" />
+                                        <p className="text-xs sm:text-xs text-gray-600 font-semibold">औसत/माह</p>
+                                        <p className="text-sm sm:text-lg font-black text-gray-800">{totalStats.avgHouseholds.toLocaleString('hi-IN')}</p>
                                     </div>
-                                    <div className="bg-white p-3 rounded-lg text-center shadow">
-                                        <IndianRupee size={24} className="mx-auto mb-1 text-orange-600" />
-                                        <p className="text-xs text-gray-600 font-semibold">कुल मज़दूरी</p>
-                                        <p className="text-lg font-black text-gray-800">₹{(totalStats.totalWages / 10000000).toFixed(1)}Cr</p>
+                                    <div className="bg-white p-2 sm:p-3 rounded-lg text-center shadow">
+                                        <IndianRupee size={window.innerWidth < 640 ? 20 : 24} className="mx-auto mb-1 text-orange-600" />
+                                        <p className="text-xs sm:text-xs text-gray-600 font-semibold">कुल मज़दूरी</p>
+                                        <p className="text-sm sm:text-lg font-black text-gray-800">₹{(totalStats.totalWages / 10000000).toFixed(1)}Cr</p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Right side - Comparison Cards (takes 1 column on desktop) */}
-                            <div className="lg:col-span-1">
-                                <h2 className="font-black text-2xl mb-4 text-center text-gray-800">इस महीने का प्रदर्शन</h2>
-                                <div className="flex flex-col gap-4">
+                            <div className="lg:col-span-1 order-1 lg:order-2">
+                                <h2 className="font-black text-xl sm:text-2xl mb-3 sm:mb-4 text-center text-gray-800">इस महीने का प्रदर्शन</h2>
+                                <div className="flex flex-col gap-3 sm:gap-4">
                                     <ComparisonCard 
                                         title="काम करने वाले परिवार" 
                                         districtValue={summaryData.householdsWorked} 
@@ -257,12 +262,12 @@ function App() {
                         </div>
 
                         {/* Bottom - Insight Text */}
-                        <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-6 rounded-xl shadow-lg">
-                            <h2 className="font-black text-2xl mb-4 text-center text-gray-800 flex items-center justify-center gap-2">
-                                <BarChart3 size={28} className="text-purple-600" />
+                        <div className="bg-gradient-to-r from-purple-100 to-pink-100 p-4 sm:p-6 rounded-xl shadow-lg">
+                            <h2 className="font-black text-xl sm:text-2xl mb-3 sm:mb-4 text-center text-gray-800 flex items-center justify-center gap-2">
+                                <BarChart3 size={window.innerWidth < 640 ? 24 : 28} className="text-purple-600" />
                                 आंकड़े क्या बताते हैं?
                             </h2>
-                            <p className="text-lg leading-relaxed text-gray-800 text-center font-medium">
+                            <p className="text-sm sm:text-lg leading-relaxed text-gray-800 text-center font-medium">
                                 {getInsightText()}
                             </p>
                         </div>
