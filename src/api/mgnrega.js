@@ -45,6 +45,9 @@ export async function fetchDistrictData(districtName) {
       }
     });
 
+     
+    console.log("Full API Response:", response.data);
+
     const records = response.data.records;
 
     // Save the new data and a timestamp to the cache
