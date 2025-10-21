@@ -15,7 +15,7 @@ let isDataLoaded = false;
  * Fetches and parses the entire CSV data for Jharkhand.
  * This should only be called once.
  */
-export async function loadInitialData() {
+export async function loadInitialData() { 
   if (isDataLoaded) {
     return;
   }
