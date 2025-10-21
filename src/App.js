@@ -7,9 +7,8 @@ import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-// This component is perfect, no changes needed.
 const ComparisonCard = ({ title, districtValue, stateValue }) => {
-    const isAboveAverage = districtValue >= stateValue;
+    const isAboveAverage = districtValue > stateValue; // Use > to avoid green for 0 vs 0
     const difference = Math.abs(districtValue - stateValue);
 
     return (
@@ -31,29 +30,29 @@ function App() {
     const [stateAverage, setStateAverage] = useState({ householdsWorked: 0, wagesSpent: 0 });
     const [isLoading, setIsLoading] = useState(true);
 
-    // Effect to fetch the list of districts ONCE on startup
+    // This effect runs only ONCE to fetch all data and populate the district list.
     useEffect(() => {
         async function loadInitialData() {
-            const allRecords = await fetchDistrictData(''); // Fetch all data to build the district list
+            const allRecords = await fetchDistrictData(''); // Fetch all data once
             const uniqueDistricts = [...new Set(allRecords.map(r => r['District Name']))].filter(Boolean).sort();
             
             setDistricts(uniqueDistricts);
             if (uniqueDistricts.length > 0) {
-                setSelectedDistrict(uniqueDistricts[0]);
+                setSelectedDistrict(uniqueDistricts[0]); // Select the first district by default
             }
             setIsLoading(false);
         }
         loadInitialData();
-    }, []);
+    }, []); // Empty array means this runs only on the first render
 
-    // Effect to fetch data when the selected district changes
+    // This effect runs whenever 'selectedDistrict' changes.
     useEffect(() => {
         if (!selectedDistrict) return;
 
         async function getDataForDistrict() {
             setIsLoading(true);
             const records = await fetchDistrictData(selectedDistrict);
-            const averageData = await fetchStateAverage();
+            const averageData = await fetchStateAverage(); // You could calculate this dynamically too
             setStateAverage(averageData);
 
             if (!records || records.length === 0) {
@@ -94,25 +93,23 @@ function App() {
 
             <div className="max-w-md mx-auto bg-white p-4 rounded-lg shadow-md">
                 <label htmlFor="district-select" className="block mb-2 font-semibold text-gray-800">Select Your District:</label>
-                {/* --- THIS IS THE FINAL FIX: The dropdown menu JSX --- */}
                 <select
                     id="district-select"
                     className="w-full border border-gray-300 p-2 rounded mb-6 focus:ring-2 focus:ring-green-500"
                     value={selectedDistrict}
                     onChange={(e) => setSelectedDistrict(e.target.value)}
-                    disabled={isLoading}
+                    disabled={districts.length === 0} // Disable until districts are loaded
                 >
-                    <option value="">{isLoading ? "Loading districts..." : "Select a district"}</option>
+                    <option value="">{districts.length > 0 ? "Select a district" : "Loading districts..."}</option>
                     {districts.map((district) => (
                         <option key={district} value={district}>
                             {district}
                         </option>
                     ))}
                 </select>
-                {/* -------------------------------------------------------- */}
 
-                {isLoading && selectedDistrict ? (
-                    <div className="text-center p-8">Loading data for {selectedDistrict}...</div>
+                {isLoading ? (
+                    <div className="text-center p-8">Loading data...</div>
                 ) : (
                     <>
                         <div className="mb-6">
