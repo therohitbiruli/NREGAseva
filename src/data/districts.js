@@ -1,0 +1,27 @@
+export const districts = [
+    { code: "101", name: "Ranchi" },
+    { code: "102", name: "Jamshedpur" },
+    { code: "103", name: "Dhanbad" },
+    { code: "104", name: "Bokaro" },
+    { code: "105", name: "Hazaribagh" },
+    { code: "106", name: "Giridih" },
+    { code: "107", name: "Ramgarh" },
+    { code: "108", name: "Deoghar" },
+    { code: "109", name: "Dumka" },
+    { code: "110", name: "Godda" },
+    { code: "111", name: "Pakur" },
+    { code: "112", name: "Jamtara" },
+    { code: "113", name: "Saraikela" },
+    { code: "114", name: "Khunti" },
+    { code: "115", name: "Simdega" },
+    { code: "116", name: "Latehar" },
+    { code: "117", name: "Palamu" },
+    { code: "118", name: "Garhwa" },
+    { code: "119", name: "Lohardaga" },
+    { code: "120", name: "Ramu" },
+    { code: "121", name: "Sahebganj" },
+    { code: "122", name: "West Singhbhum" },
+    { code: "123", name: "East Singhbhum" },
+    { code: "124", name: "Chatra" }
+  ];
+  
