@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
 import { loadInitialData, getDistrictData, getDistrictList, fetchStateAverage, getAvailableFinancialYears } from "./api/mgnrega";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from "chart.js";
-import { Users, IndianRupee, TrendingUp, TrendingDown, BarChart3, Calendar } from "lucide-react";
+import { Users, IndianRupee, TrendingUp, TrendingDown, BarChart3, Calendar, MapPin } from "lucide-react";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -59,6 +59,93 @@ function App() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     const [totalStats, setTotalStats] = useState({ totalHouseholds: 0, avgHouseholds: 0, totalWages: 0 });
+    const [detectedLocation, setDetectedLocation] = useState(null);
+    const [locationStatus, setLocationStatus] = useState(''); // For showing location detection message
+
+    // Map of common city/region names to district names in Jharkhand
+    const locationToDistrict = {
+        'ranchi': 'RANCHI',
+        'jamshedpur': 'SARAIKELA-KHARSAWAN',
+        'dhanbad': 'DHANBAD',
+        'bokaro': 'BOKARO',
+        'deoghar': 'DEOGHAR',
+        'giridih': 'GIRIDIH',
+        'hazaribag': 'HAZARIBAGH',
+        'hazaribagh': 'HAZARIBAGH',
+        'dumka': 'DUMKA',
+        'ramgarh': 'RAMGARH',
+        'east singhbhum': 'SARAIKELA-KHARSAWAN',
+        'west singhbhum': 'WEST SINGHBHUM',
+        'saraikela': 'SARAIKELA-KHARSAWAN',
+        'kharsawan': 'SARAIKELA-KHARSAWAN',
+        'gumla': 'GUMLA',
+        'simdega': 'SIMDEGA',
+        'lohardaga': 'LOHARDAGA',
+        'palamu': 'PALAMU',
+        'latehar': 'LATEHAR',
+        'chatra': 'CHATRA',
+        'koderma': 'KODERMA',
+        'jamtara': 'JAMTARA',
+        'sahibganj': 'SAHEBGANJ',
+        'pakur': 'PAKUR',
+        'godda': 'GODDA'
+    };
+
+    // Function to detect user location using IP geolocation
+    const detectUserLocation = async () => {
+        try {
+            setLocationStatus('आपका स्थान पता लगाया जा रहा है...');
+            
+            // Using ipapi.co - free IP geolocation API
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json();
+            
+            console.log('Detected location:', data);
+            
+            if (data && data.region) {
+                const region = data.region.toLowerCase();
+                const city = data.city ? data.city.toLowerCase() : '';
+                
+                setDetectedLocation(`${data.city || data.region}, ${data.region}`);
+                
+                // Try to match city first, then region
+                let matchedDistrict = null;
+                
+                // Check city name
+                for (const [key, district] of Object.entries(locationToDistrict)) {
+                    if (city.includes(key) || key.includes(city)) {
+                        matchedDistrict = district;
+                        break;
+                    }
+                }
+                
+                // If no city match, check region
+                if (!matchedDistrict) {
+                    for (const [key, district] of Object.entries(locationToDistrict)) {
+                        if (region.includes(key) || key.includes(region)) {
+                            matchedDistrict = district;
+                            break;
+                        }
+                    }
+                }
+                
+                if (matchedDistrict) {
+                    setLocationStatus(`✓ स्थान मिल गया: ${data.city || data.region}`);
+                    return matchedDistrict;
+                } else {
+                    setLocationStatus(`स्थान: ${data.city || data.region} (झारखंड के बाहर)`);
+                    return null;
+                }
+            }
+            
+            setLocationStatus('स्थान का पता नहीं लगा सका');
+            return null;
+        } catch (error) {
+            console.error('Location detection error:', error);
+            setLocationStatus('स्थान पता लगाने में त्रुटि');
+            return null;
+        }
+    };
 
     // This effect runs only ONCE to load all data and populate the district list.
     useEffect(() => {
@@ -71,8 +158,14 @@ function App() {
                 setDistricts(districtList);
                 setFinancialYears(yearsList);
                 
-                if (districtList.length > 0) {
-                    setSelectedDistrict(districtList[0]); // Set the first district as the default
+                // Try to detect user location
+                const detectedDistrict = await detectUserLocation();
+                
+                if (detectedDistrict && districtList.includes(detectedDistrict)) {
+                    setSelectedDistrict(detectedDistrict); // Set detected district
+                    console.log('Auto-selected district based on location:', detectedDistrict);
+                } else if (districtList.length > 0) {
+                    setSelectedDistrict(districtList[0]); // Fallback to first district
                 } else {
                     setError("कोई ज़िला डेटा लोड नहीं हो सका। डेटा स्रोत खाली हो सकता है।");
                 }
@@ -159,6 +252,11 @@ function App() {
             <header className="text-center mb-4 sm:mb-8">
                 <h1 className="text-3xl sm:text-5xl font-black text-green-800 mb-1 sm:mb-2">नरेगा केंद्र</h1>
                 <p className="text-sm sm:text-xl text-gray-700 font-semibold">मनरेगा प्रदर्शन डैशबोर्ड - झारखंड</p>
+                {locationStatus && (
+                    <p className="text-xs sm:text-sm text-blue-600 font-semibold mt-2 flex items-center justify-center gap-1">
+                        📍 {locationStatus}
+                    </p>
+                )}
             </header>
 
             <div className="max-w-6xl mx-auto bg-white p-3 sm:p-6 rounded-2xl shadow-2xl">
@@ -173,20 +271,35 @@ function App() {
                                 <label htmlFor="district-select" className="block mb-2 font-bold text-lg sm:text-xl text-gray-800 text-center">
                                     अपना ज़िला चुनें:
                                 </label>
-                                <select
-                                    id="district-select"
-                                    className="w-full border-4 border-green-500 p-3 sm:p-4 rounded-xl focus:ring-4 focus:ring-green-300 text-lg sm:text-xl font-bold text-gray-800 bg-green-50"
-                                    value={selectedDistrict}
-                                    onChange={(e) => setSelectedDistrict(e.target.value)}
-                                    disabled={isLoading}
-                                >
-                                    {isLoading && <option>ज़िले लोड हो रहे हैं...</option>}
-                                    {districts.map((district) => (
-                                        <option key={district} value={district}>
-                                            {district}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="relative">
+                                    <select
+                                        id="district-select"
+                                        className="w-full border-4 border-green-500 p-3 sm:p-4 rounded-xl focus:ring-4 focus:ring-green-300 text-lg sm:text-xl font-bold text-gray-800 bg-green-50"
+                                        value={selectedDistrict}
+                                        onChange={(e) => setSelectedDistrict(e.target.value)}
+                                        disabled={isLoading}
+                                    >
+                                        {isLoading && <option>ज़िले लोड हो रहे हैं...</option>}
+                                        {districts.map((district) => (
+                                            <option key={district} value={district}>
+                                                {district}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        onClick={async () => {
+                                            const detectedDistrict = await detectUserLocation();
+                                            if (detectedDistrict && districts.includes(detectedDistrict)) {
+                                                setSelectedDistrict(detectedDistrict);
+                                            }
+                                        }}
+                                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg transition-colors"
+                                        title="मेरा स्थान खोजें"
+                                        disabled={isLoading}
+                                    >
+                                        <MapPin size={20} />
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Financial Year Selector */}
