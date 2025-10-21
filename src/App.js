@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
-import { loadInitialData, getDistrictData, getDistrictList, fetchStateAverage } from "./api/mgnrega";
+import { loadInitialData, getDistrictData, getDistrictList, fetchStateAverage, getAvailableFinancialYears } from "./api/mgnrega";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from "chart.js";
-import { Users, IndianRupee, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
+import { Users, IndianRupee, TrendingUp, TrendingDown, BarChart3, Calendar } from "lucide-react";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -34,23 +34,25 @@ const ComparisonCard = ({ title, districtValue, stateValue, icon: Icon }) => {
 
 // Month name mapping
 const monthNames = {
-    'January': 'जनवरी',
-    'February': 'फरवरी',
-    'March': 'मार्च',
-    'April': 'अप्रैल',
-    'May': 'मई',
-    'June': 'जून',
-    'July': 'जुलाई',
-    'August': 'अगस्त',
-    'September': 'सितंबर',
-    'October': 'अक्टूबर',
-    'November': 'नवंबर',
-    'December': 'दिसंबर'
+    'JANUARY': 'जनवरी',
+    'FEBRUARY': 'फरवरी',
+    'MARCH': 'मार्च',
+    'APRIL': 'अप्रैल',
+    'MAY': 'मई',
+    'JUNE': 'जून',
+    'JULY': 'जुलाई',
+    'AUGUST': 'अगस्त',
+    'SEPTEMBER': 'सितंबर',
+    'OCTOBER': 'अक्टूबर',
+    'NOVEMBER': 'नवंबर',
+    'DECEMBER': 'दिसंबर'
 };
 
 function App() {
     const [districts, setDistricts] = useState([]);
     const [selectedDistrict, setSelectedDistrict] = useState('');
+    const [financialYears, setFinancialYears] = useState([]);
+    const [selectedFinYear, setSelectedFinYear] = useState('');
     const [summaryData, setSummaryData] = useState({ householdsWorked: 0, wagesSpent: 0 });
     const [trendData, setTrendData] = useState({ labels: [], datasets: [] });
     const [stateAverage, setStateAverage] = useState({ householdsWorked: 0, wagesSpent: 0 });
@@ -64,11 +66,19 @@ function App() {
             try {
                 await loadInitialData(); // Wait for all data to be fetched and parsed
                 const districtList = getDistrictList(); // Get the list of districts
+                const yearsList = getAvailableFinancialYears(); // Get available financial years
+                
                 setDistricts(districtList);
+                setFinancialYears(yearsList);
+                
                 if (districtList.length > 0) {
                     setSelectedDistrict(districtList[0]); // Set the first district as the default
                 } else {
                     setError("कोई ज़िला डेटा लोड नहीं हो सका। डेटा स्रोत खाली हो सकता है।");
+                }
+                
+                if (yearsList.length > 0) {
+                    setSelectedFinYear(yearsList[yearsList.length - 1]); // Set the latest year as default
                 }
             } catch (e) {
                 setError("प्रारंभिक डेटा लोड करने में विफल। कृपया अपना कनेक्शन और API स्थिति जांचें।");
@@ -79,11 +89,11 @@ function App() {
         startup();
     }, []); // The empty array ensures this runs only once.
 
-    // This effect runs whenever 'selectedDistrict' changes.
+    // This effect runs whenever 'selectedDistrict' or 'selectedFinYear' changes.
     useEffect(() => {
-        if (!selectedDistrict) return;
+        if (!selectedDistrict || !selectedFinYear) return;
 
-        const records = getDistrictData(selectedDistrict);
+        const records = getDistrictData(selectedDistrict, selectedFinYear);
         const averageData = fetchStateAverage();
         setStateAverage(averageData);
 
@@ -109,14 +119,10 @@ function App() {
             wagesSpent: parseFloat(current['Wages'] || 0)
         });
 
-        // Convert month names to Hindi with year
+        // Convert month names to Hindi
         const hindiLabels = last6Months.map(r => {
-            const monthName = r.Month || 'N/A';
-            const year = r.Year || r.year || new Date().getFullYear(); // Try to get year from data
-            // Debug: Log what we're getting
-            console.log('Original month from data:', monthName, 'Year:', year);
-            const hindiMonth = monthNames[monthName] || monthName;
-            return `${hindiMonth} ${year}`;
+            const monthName = (r.Month || '').toUpperCase();
+            return monthNames[monthName] || r.Month || 'N/A';
         });
 
         setTrendData({
@@ -132,7 +138,7 @@ function App() {
             }]
         });
 
-    }, [selectedDistrict]);
+    }, [selectedDistrict, selectedFinYear]);
 
     // Generate insight text
     const getInsightText = () => {
@@ -160,23 +166,51 @@ function App() {
                     <div className="text-center p-6 bg-red-100 text-red-700 rounded-xl text-xl font-bold">{error}</div>
                 ) : (
                     <>
-                        <label htmlFor="district-select" className="block mb-2 sm:mb-3 font-bold text-xl sm:text-2xl text-gray-800 text-center">
-                            अपना ज़िला चुनें:
-                        </label>
-                        <select
-                            id="district-select"
-                            className="w-full border-4 border-green-500 p-3 sm:p-4 rounded-xl mb-4 sm:mb-8 focus:ring-4 focus:ring-green-300 text-lg sm:text-xl font-bold text-gray-800 bg-green-50"
-                            value={selectedDistrict}
-                            onChange={(e) => setSelectedDistrict(e.target.value)}
-                            disabled={isLoading}
-                        >
-                            {isLoading && <option>ज़िले लोड हो रहे हैं...</option>}
-                            {districts.map((district) => (
-                                <option key={district} value={district}>
-                                    {district}
-                                </option>
-                            ))}
-                        </select>
+                        {/* Selection dropdowns in a grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 sm:mb-8">
+                            {/* District Selector */}
+                            <div>
+                                <label htmlFor="district-select" className="block mb-2 font-bold text-lg sm:text-xl text-gray-800 text-center">
+                                    अपना ज़िला चुनें:
+                                </label>
+                                <select
+                                    id="district-select"
+                                    className="w-full border-4 border-green-500 p-3 sm:p-4 rounded-xl focus:ring-4 focus:ring-green-300 text-lg sm:text-xl font-bold text-gray-800 bg-green-50"
+                                    value={selectedDistrict}
+                                    onChange={(e) => setSelectedDistrict(e.target.value)}
+                                    disabled={isLoading}
+                                >
+                                    {isLoading && <option>ज़िले लोड हो रहे हैं...</option>}
+                                    {districts.map((district) => (
+                                        <option key={district} value={district}>
+                                            {district}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Financial Year Selector */}
+                            <div>
+                                <label htmlFor="year-select" className="block mb-2 font-bold text-lg sm:text-xl text-gray-800 text-center flex items-center justify-center gap-2">
+                                    <Calendar size={24} className="text-blue-600" />
+                                    वित्तीय वर्ष चुनें:
+                                </label>
+                                <select
+                                    id="year-select"
+                                    className="w-full border-4 border-blue-500 p-3 sm:p-4 rounded-xl focus:ring-4 focus:ring-blue-300 text-lg sm:text-xl font-bold text-gray-800 bg-blue-50"
+                                    value={selectedFinYear}
+                                    onChange={(e) => setSelectedFinYear(e.target.value)}
+                                    disabled={isLoading}
+                                >
+                                    {isLoading && <option>वर्ष लोड हो रहे हैं...</option>}
+                                    {financialYears.map((year) => (
+                                        <option key={year} value={year}>
+                                            {year}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
                         
                         {/* Main content grid - side by side on desktop, stacked on mobile */}
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-8">
