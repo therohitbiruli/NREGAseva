@@ -1,16 +1,18 @@
-import axios from "axios";
+// src/api/mgnrega.js
 
-// --- IMPORTANT: REPLACE THESE WITH YOUR OWN CREDENTIALS ---
-const API_KEY = "579b464db66ec23bdd000001bdc01081422544e260f634b8b8c51aa1";
-const RESOURCE_ID = "ee03643a-ee4c-48c2-ac30-9f26ff26ab722";
+import axios from "axios";
+import Papa from "papaparse"; // Import the CSV parser
+
+// --- IMPORTANT: Use your final, regenerated API key ---
+const API_KEY = "579b464db66ec23bdd000001bdc01081422544e260f634b8b8c51aa1"; // Paste your newest key
+const RESOURCE_ID = "ee03643a-ee4c-4c82-ac30-9f26ff26ab722";
 // ---------------------------------------------------------
 
-const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
-const API_BASE_URL = `${CORS_PROXY}https://api.data.gov.in/resource/${RESOURCE_ID}`;
+// Construct the URL to fetch the CSV for all of Jharkhand
+const JHARKHAND_CSV_URL = `https://api.data.gov.in/resource/${RESOURCE_ID}?api-key=${API_KEY}&format=csv&limit=all&filters[state_name]=JHARKHAND`;
 
-// This is a placeholder for a real state-level API call.
-// We are hardcoding this for now.
-export async function fetchStateAverage() {
+// This function for the state average can stay the same
+export function fetchStateAverage() {
   return {
     householdsWorked: 11500,
     personDays: 52000,
@@ -19,47 +21,46 @@ export async function fetchStateAverage() {
 }
 
 
+// We need to fetch and parse the data only once, so we'll store it here.
+let allJharkhandData = [];
+
+// This is our new, live-fetching function.
 export async function fetchDistrictData(districtName) {
-  // Use localStorage for caching to avoid repeated API calls
-  const cacheKey = `district_${districtName}`;
-  const cachedData = localStorage.getItem(cacheKey);
-
-  // If we have recent cached data, use it. (Cache for 1 hour)
-  if (cachedData) {
-    const { data, timestamp } = JSON.parse(cachedData);
-    if (Date.now() - timestamp < 3600000) {
-      console.log("Returning cached data for", districtName);
-      return data;
-    }
-  }
-
   try {
-    console.log("Fetching live data for", districtName);
-    const response = await axios.get(API_BASE_URL, {
-      params: {
-        'api-key': API_KEY,
-        format: 'json',
-        limit: 12, // Get the last 12 months
-        'filters[state_name]': 'JHARKHAND',
-        'filters[district_name]': districtName.toUpperCase(), // API expects uppercase district name
-      }
-    });
+    // If we haven't fetched the data yet, go get it.
+    if (allJharkhandData.length === 0) {
+      console.log("Fetching live CSV data for all of Jharkhand...");
+      const response = await axios.get(JHARKHAND_CSV_URL);
+      const csvText = response.data;
 
-     
-    console.log("Full API Response:", response.data);
+      // Use Papa Parse to convert the CSV text to JSON
+      const parsedData = Papa.parse(csvText, {
+        header: true, // Treat the first row as headers (keys)
+        skipEmptyLines: true,
+      });
 
-    const records = response.data.records;
-
-    // Save the new data and a timestamp to the cache
-    localStorage.setItem(cacheKey, JSON.stringify({ data: records, timestamp: Date.now() }));
-
-    return records;
-  } catch (err) {
-    console.error("API fetch failed, trying to use older cache if available", err);
-    // If API fails, return cached data even if it's old
-    if (cachedData) {
-      return JSON.parse(cachedData).data;
+      allJharkhandData = parsedData.data;
+      console.log("Successfully fetched and parsed Jharkhand data.");
     }
-    return null; // No live data and no cache
+
+    // Now, filter the in-memory data for the selected district.
+    const districtRecords = allJharkhandData.filter(
+      record => record.district_name.toLowerCase() === districtName.toLowerCase()
+    );
+
+    // Sort records to ensure the chart is in the correct order
+    districtRecords.sort((a, b) => {
+      if (a.fin_year !== b.fin_year) {
+        return a.fin_year.localeCompare(b.fin_year);
+      }
+      const monthOrder = ["APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER", "JANUARY", "FEBRUARY", "MARCH"];
+      return monthOrder.indexOf(a.month_name.toUpperCase()) - monthOrder.indexOf(b.month_name.toUpperCase());
+    });
+    
+    return districtRecords;
+
+  } catch (err) {
+    console.error("Error fetching or parsing CSV data:", err);
+    return []; // Return empty array on failure
   }
 }

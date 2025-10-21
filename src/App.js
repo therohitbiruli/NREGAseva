@@ -45,6 +45,7 @@ function App() {
 
             // Fetch both district and state data
             const records = await fetchDistrictData(selectedDistrict.name);
+
             const averageData = await fetchStateAverage();
             setStateAverage(averageData);
 
