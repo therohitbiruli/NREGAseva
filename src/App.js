@@ -39,49 +39,49 @@ function App() {
     const [stateAverage, setStateAverage] = useState({ householdsWorked: 0, personDays: 0, wagesSpent: 0 }); // New state for average
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        async function getData() {
-            setIsLoading(true);
+    // Replace the entire useEffect in your App.js with this one.
 
-            // Fetch both district and state data
-            const records = await fetchDistrictData(selectedDistrict.name);
+useEffect(() => {
+  async function getData() {
+      setIsLoading(true);
+      const records = await fetchDistrictData(selectedDistrict.name);
+      const averageData = await fetchStateAverage();
+      setStateAverage(averageData);
 
-            const averageData = await fetchStateAverage();
-            setStateAverage(averageData);
-
-            if (!records || records.length === 0) {
-              // If no records, reset data to 0
-              setSummaryData({ householdsWorked: 0, personDays: 0, wagesSpent: 0 });
-              setTrendData({ labels: [], datasets: [] });
-              setIsLoading(false);
-              return;
-          };
-
-            const last6Months = records.slice(-6);
-            const current = last6Months.length > 0 ? last6Months[last6Months.length - 1] : {};
-
-            setSummaryData({
-                householdsWorked: parseInt(current.households_worked || 0),
-                personDays: parseInt(current.person_days || 0),
-                wagesSpent: parseInt(current.wages_spent || 0)
-            });
-
-            setTrendData({
-              labels: last6Months.map(r => r.Month || 'N/A'),
-              datasets: [
-                  {
-                      label: "Households Worked",
-                      data: last6Months.map(r => parseInt(r['Total Households Worked'] || 0)),
-                      borderColor: "rgb(34,197,94)",
-                      backgroundColor: "rgba(34,197,94,0.5)"
-                  }
-              ]
-          });
+      if (!records || records.length === 0) {
+          setSummaryData({ householdsWorked: 0, personDays: 0, wagesSpent: 0 });
+          setTrendData({ labels: [], datasets: [] });
           setIsLoading(false);
-      }
+          return;
+      };
 
-        getData();
-    }, [selectedDistrict]);
+      const last6Months = records.slice(-6);
+      const current = last6Months.length > 0 ? last6Months[last6Months.length - 1] : {};
+
+      // --- THIS IS THE FINAL FIX ---
+      // We are now using the correct property names from the CSV file.
+      setSummaryData({
+          householdsWorked: parseInt(current['Total Households Worked'] || 0),
+          personDays: parseInt(current['Total No of Person days Generated'] || 0),
+          wagesSpent: parseFloat(current['Total wages'] || 0)
+      });
+
+      setTrendData({
+          labels: last6Months.map(r => r.Month || 'N/A'),
+          datasets: [
+              {
+                  label: "Households Worked",
+                  data: last6Months.map(r => parseInt(r['Total Households Worked'] || 0)),
+                  borderColor: "rgb(34,197,94)",
+                  backgroundColor: "rgba(34,197,94,0.5)"
+              }
+          ]
+      });
+      setIsLoading(false);
+  }
+
+  getData();
+}, [selectedDistrict]);
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 font-sans">
