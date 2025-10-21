@@ -75,21 +75,21 @@ function App() {
         });
 
         setTrendData({
-            labels: last6Months.map(r => r.Month || 'N/A'),
-            datasets: [{
-                label: "Households Worked",
-                data: last6Months.map(r => parseInt(r['Total Households Worked'] || 0)),
-                borderColor: "rgb(34,197,94)",
-                backgroundColor: "rgba(34,197,94,0.5)"
-            }]
-        });
+          labels: last6Months.map(r => `${(r.Month || '').substring(0, 3)} ${r['fin year']}`),
+          datasets: [{
+            label: "Households Worked",
+            data: last6Months.map(r => parseInt(r['Total Households Worked'] || 0)),
+            borderColor: "rgb(34,197,94)",
+            backgroundColor: "rgba(34,197,94,0.5)"
+        }]
+    });
 
     }, [selectedDistrict]);
 
     return (
         <div className="min-h-screen bg-gray-50 p-4 font-sans">
             <header className="text-center mb-6">
-                <h1 className="text-3xl font-bold text-green-700">NREGAkendra</h1>
+                <h1 className="text-3xl font-bold text-green-700">NREGAseva</h1>
                 <p className="text-gray-600 mt-2">MGNREGA Performance Dashboard for Jharkhand</p>
             </header>
 
