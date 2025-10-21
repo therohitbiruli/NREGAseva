@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
-import { loadInitialData, getDistrictData, getDistrictList, fetchStateAverage } from "./api/mgnrega";
+import { getDistrictData, getDistrictList, fetchStateAverage } from "./api/mgnrega";
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from "chart.js";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const ComparisonCard = ({ title, districtValue, stateValue }) => {
+// Correctly defined ComparisonCard component
+const ComparisonCard = ({ title, districtValue, stateValue }) => { 
     const isAboveAverage = districtValue > stateValue;
     const difference = Math.abs(districtValue - stateValue);
 
@@ -29,28 +30,23 @@ function App() {
     const [trendData, setTrendData] = useState({ labels: [], datasets: [] });
     const [stateAverage, setStateAverage] = useState({ householdsWorked: 0, wagesSpent: 0 });
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState(null); // Added the missing error state
 
-    // This effect runs only ONCE to load all data and populate the district list.
+    // This effect runs only ONCE to load the district list from the JSON file.
     useEffect(() => {
-        async function startup() {
-            try {
-                await loadInitialData(); // Wait for all data to be fetched and parsed
-                const districtList = getDistrictList(); // Get the list of districts
-                setDistricts(districtList);
-                if (districtList.length > 0) {
-                    setSelectedDistrict(districtList[0]); // Set the first district as the default
-                } else {
-                    setError("No district data could be loaded. The data source might be empty.");
-                }
-            } catch (e) {
-                setError("Failed to load initial data. Please check your connection and the API status.");
-            } finally {
-                setIsLoading(false);
+        try {
+            const districtList = getDistrictList();
+            setDistricts(districtList);
+            if (districtList.length > 0) {
+                setSelectedDistrict(districtList[0]);
+            } else {
+                setError("No districts found in the data file.");
             }
+        } catch (e) {
+            setError("Could not read the local data file. Make sure it's in the correct location and format.");
         }
-        startup();
-    }, []); // The empty array ensures this runs only once.
+        setIsLoading(false);
+    }, []);
 
     // This effect runs whenever 'selectedDistrict' changes.
     useEffect(() => {
@@ -75,24 +71,24 @@ function App() {
         });
 
         setTrendData({
-          labels: last6Months.map(r => `${(r.Month || '').substring(0, 3)} ${r['fin year']}`),
-          datasets: [{
-            label: "Households Worked",
-            data: last6Months.map(r => parseInt(r['Total Households Worked'] || 0)),
-            borderColor: "rgb(34,197,94)",
-            backgroundColor: "rgba(34,197,94,0.5)"
-        }]
-    });
-
+            labels: last6Months.map(r => `${(r.Month || '').substring(0, 3)} ${r['fin year']}`),
+            datasets: [{
+                label: "Households Worked",
+                data: last6Months.map(r => parseInt(r['Total Households Worked'] || 0)),
+                borderColor: "rgb(34,197,94)",
+                backgroundColor: "rgba(34,197,94,0.5)"
+            }]
+        });
     }, [selectedDistrict]);
 
+    // The main JSX to be returned by the App component
     return (
         <div className="min-h-screen bg-gray-50 p-4 font-sans">
             <header className="text-center mb-6">
                 <h1 className="text-3xl font-bold text-green-700">NREGAseva</h1>
                 <p className="text-gray-600 mt-2">MGNREGA Performance Dashboard for Jharkhand</p>
             </header>
-
+            
             <div className="max-w-md mx-auto bg-white p-4 rounded-lg shadow-md">
                 {error ? (
                     <div className="text-center p-4 bg-red-100 text-red-700 rounded">{error}</div>
@@ -132,4 +128,5 @@ function App() {
     );
 }
 
+// Correctly placed export statement
 export default App;
