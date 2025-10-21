@@ -41,6 +41,8 @@ function App() {
 
     // Replace the entire useEffect in your App.js with this one.
 
+// Replace the entire useEffect in your App.js with this one.
+
 useEffect(() => {
   async function getData() {
       setIsLoading(true);
@@ -58,12 +60,11 @@ useEffect(() => {
       const last6Months = records.slice(-6);
       const current = last6Months.length > 0 ? last6Months[last6Months.length - 1] : {};
 
-      // --- THIS IS THE FINAL FIX ---
-      // We are now using the correct property names from the CSV file.
+      // --- FINAL FIX #2: Use the exact property names from the CSV file. ---
       setSummaryData({
           householdsWorked: parseInt(current['Total Households Worked'] || 0),
           personDays: parseInt(current['Total No of Person days Generated'] || 0),
-          wagesSpent: parseFloat(current['Total wages'] || 0)
+          wagesSpent: parseFloat(current['Wages'] || 0) // The header is 'Wages'
       });
 
       setTrendData({
