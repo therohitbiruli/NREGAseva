@@ -67,12 +67,14 @@ async function loadAllJharkhandData() {
 
     const csvText = response.data;
     
-    // Parse CSV with papaparse
+    // Parse CSV with papaparse - more robust configuration
     const parsedData = Papa.parse(csvText, {
       header: true,
       skipEmptyLines: true,
-      transformHeader: (header) => header.trim(), // Remove whitespace from headers
-      transform: (value) => value.trim(), // Remove whitespace from values
+      dynamicTyping: false, // Keep everything as strings initially
+      transformHeader: (header) => header.trim(),
+      transform: (value) => typeof value === 'string' ? value.trim() : value,
+      delimitersToGuess: [',', '\t', '|', ';'],
     });
 
     if (parsedData.errors.length > 0) {
