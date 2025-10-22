@@ -130,7 +130,7 @@ function App() {
                 }
                 
                 if (matchedDistrict) {
-                    setLocationStatus(`✓ स्थान मिल गया: ${data.city || data.region}`);
+                    setLocationStatus(` ${data.city || data.region}`);
                     return matchedDistrict;
                 } else {
                     setLocationStatus(`स्थान: ${data.city || data.region} (झारखंड के बाहर)`);
