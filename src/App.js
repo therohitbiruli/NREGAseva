@@ -380,11 +380,7 @@ function App() {
                                         <p className="text-xs sm:text-xs text-gray-600 font-semibold">औसत/माह</p>
                                         <p className="text-sm sm:text-lg font-black text-gray-800">{totalStats.avgHouseholds.toLocaleString('hi-IN')}</p>
                                     </div>
-                                    <div className="bg-white p-2 sm:p-3 rounded-lg text-center shadow">
-                                        <IndianRupee size={window.innerWidth < 640 ? 20 : 24} className="mx-auto mb-1 text-orange-600" />
-                                        <p className="text-xs sm:text-xs text-gray-600 font-semibold">कुल मज़दूरी</p>
-                                        <p className="text-sm sm:text-lg font-black text-gray-800">₹{(totalStats.totalWages / 10000000).toFixed(1)}Cr</p>
-                                    </div>
+                                    
                                 </div>
                             </div>
 
